@@ -1,9 +1,7 @@
 from fastapi import FastAPI, HTTPException
-
 from app.schemas import SalesTransaction
 from app.transform import transform_transaction
 from app.connect_bq import insert_transaction
-
 
 app = FastAPI(title="Sales ETL Microservice")
 
@@ -16,17 +14,21 @@ def health_check():
 @app.post("/transactions")
 def create_transaction(transaction: SalesTransaction):
     try:
-        # 1. Transform the validated transaction
         transformed = transform_transaction(transaction)
 
-        # 2. Load into BigQuery
+        # Load into BigQuery
         insert_transaction(transformed)
 
-        # 3. Return success
+        # Convert datetime to JSON-serializable string
+        response_data = transformed.copy()
+        response_data["processed_timestamp"] = (
+            transformed["processed_timestamp"].isoformat()
+        )
+
         return {
             "status": "success",
             "message": "Transaction processed and loaded into BigQuery",
-            "data": transformed,
+            "data": response_data,
         }
 
     except Exception as e:

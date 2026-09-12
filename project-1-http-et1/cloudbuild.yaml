@@ -3,7 +3,7 @@ steps:
   # 1. Install dependencies and run unit tests
   - name: 'python:3.12-slim'
     id: 'run-tests'
-    dir:'project-1-http-et1'
+    dir: 'project-1-http-et1'
     entrypoint: 'bash'
     args:
       - '-c'
@@ -14,7 +14,7 @@ steps:
   # 2. Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-image'
-    dir:'project-1-http-et1'
+    dir: 'project-1-http-et1'
     args:
       - 'build'
       - '-t'
@@ -24,6 +24,7 @@ steps:
   # 3. Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-image'
+    dir: 'project-1-http-et1'
     args:
       - 'push'
       - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'

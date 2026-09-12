@@ -17,7 +17,7 @@ def test_insert_transaction_success():
     }
 
     with patch(
-        "app.bigquery_client.client.insert_rows_json",
+        "app.connect_bq.client.insert_rows_json",
         return_value=[]
     ):
         result = insert_transaction(transaction)

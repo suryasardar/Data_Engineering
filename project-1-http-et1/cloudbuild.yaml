@@ -1,47 +1,34 @@
 steps:
 
-  # --------------------------------------------------
-  # STEP 1: Install dependencies and run unit tests
-  # --------------------------------------------------
+  # 1. Install dependencies and run unit tests
   - name: 'python:3.12-slim'
     id: 'run-tests'
     entrypoint: 'bash'
-    dir: 'project-1-http-et1'
     args:
       - '-c'
       - |
         pip install --no-cache-dir -r requirements.txt
         python -m pytest
 
-
-  # --------------------------------------------------
-  # STEP 2: Build Docker image
-  # --------------------------------------------------
+  # 2. Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-image'
     args:
       - 'build'
       - '-t'
       - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'
-      - 'project-1-http-et1'
+      - '.'
 
-
-  # --------------------------------------------------
-  # STEP 3: Push Docker image to Artifact Registry
-  # --------------------------------------------------
+  # 3. Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
     id: 'push-image'
     args:
       - 'push'
       - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'
 
-
-  # --------------------------------------------------
-  # STEP 4: Deploy new revision to Cloud Run
-  #         Initially receive NO traffic
-  # --------------------------------------------------
+  # 4. Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy-staging'
+    id: 'deploy-cloud-run'
     entrypoint: 'gcloud'
     args:
       - 'run'
@@ -56,44 +43,6 @@ steps:
       - '--no-traffic'
       - '--allow-unauthenticated'
 
-
-  # --------------------------------------------------
-  # STEP 5: Get the newly deployed revision name
-  # --------------------------------------------------
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'get-revision'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        gcloud run services describe sales-etl-service \
-          --region=asia-south1 \
-          --format='value(status.latestCreatedRevisionName)' \
-          > /workspace/revision.txt
-
-
-  # --------------------------------------------------
-  # STEP 6: Split traffic
-  #
-  # New revision = 10%
-  # Existing production revision = 90%
-  # --------------------------------------------------
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'traffic-split'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        REVISION=$(cat /workspace/revision.txt)
-
-        echo "New revision: $REVISION"
-
-        gcloud run services update-traffic sales-etl-service \
-          --region=asia-south1 \
-          --to-revisions="$REVISION=10"
-
-
-# Store the built image in Cloud Build's build results
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'
 

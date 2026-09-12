@@ -44,6 +44,8 @@ steps:
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
 
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'

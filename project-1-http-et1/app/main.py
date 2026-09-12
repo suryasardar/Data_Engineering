@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 from app.schemas import SalesTransaction
 from app.transform import transform_transaction
+from app.connect_bq import insert_transaction
 
 
 app = FastAPI(title="Sales ETL Microservice")
@@ -14,9 +15,22 @@ def health_check():
 
 @app.post("/transactions")
 def create_transaction(transaction: SalesTransaction):
-    transformed = transform_transaction(transaction)
+    try:
+        # 1. Transform the validated transaction
+        transformed = transform_transaction(transaction)
 
-    return {
-        "status": "success",
-        "data": transformed,
-    }
+        # 2. Load into BigQuery
+        insert_transaction(transformed)
+
+        # 3. Return success
+        return {
+            "status": "success",
+            "message": "Transaction processed and loaded into BigQuery",
+            "data": transformed,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process transaction: {str(e)}"
+        )

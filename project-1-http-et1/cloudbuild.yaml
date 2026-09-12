@@ -96,3 +96,6 @@ steps:
 # Store the built image in Cloud Build's build results
 images:
   - 'asia-south1-docker.pkg.dev/$PROJECT_ID/etl-project/http-etl:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,0 +1,29 @@
+steps:
+  # 1. Lint the code using flake8
+  - name: 'python:3.9'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - 'pip install flake8 && flake8 main.py'
+
+  # 2. Run unit tests
+  - name: 'python:3.9'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - 'pip install pytest -r requirements.txt && pytest'
+
+  # 3. Deploy to Cloud Run Functions
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'csv-processor'
+      - '--gen2'
+      - '--runtime=python39'
+      - '--region=us-central1'
+      - '--source=.'
+      - '--entry-point=process_csv'
+      - '--trigger-http'
+      - '--no-allow-unauthenticated'
